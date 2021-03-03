@@ -1,32 +1,34 @@
-# write your code here!
 import requests
-import json
-
-cur_rates = {"RUB": 2.98,
-             "ARS": 0.82,
-             "HNL": 0.17,
-             "AUD": 1.9622,
-             "MAD": 0.208}
 
 
-URL = "http://www.floatrates.com/daily/"
+class MyConverter:
+    def __init__(self):
+        self.request_cache = dict()
+        self.rates_cache = dict()
 
-cur_code = input()
+    def cache_init(self, base_cur):
+        self.request_cache = requests.get("http://www.floatrates.com/daily/" + base_cur + ".json").json()
+        self.rates_cache["USD"] = self.request_cache.get("usd", {"rate": 1})["rate"]
+        self.rates_cache["EUR"] = self.request_cache.get("eur", {"rate": 1})["rate"]
 
-r = requests.get(URL + cur_code + ".json")
-resp = json.loads(r.text)
-print(resp["usd"])
-print(resp["eur"])
+    def get_rate(self, cur_code):
+        print("Checking the cache...")
+        if rate := self.rates_cache.get(cur_code):
+            print("Oh! It is in the cache!")
+        else:
+            print("Sorry, but it is not in the cache!")
+            rate = self.request_cache.get(cur_code.lower(), {"rate": 0})["rate"]
+            self.rates_cache.update({cur_code: rate})
+        return rate
+
+    def run(self):
+        self.cache_init(input())
+        while cur_code := input().upper():
+            amount = float(input())
+            cur_rate = self.get_rate(cur_code)
+            print(f"You received {round(amount * cur_rate, 2)} {cur_code}.")
 
 
-# coins = float(input())
-# if coins.is_integer():
-#     coins = int(coins)
-
-# print(*[f"I will get {round(coins * rate, 2)} {cur} from the sale of {coins} conicoins." for cur, rate in
-#        cur_rates.items()], sep="\n")
-
-# coins = int(input("Please, enter the number of conicoins you have: "))
-# rate = float(input("Please, enter the exchange rate: "))
-# dollars = int(coins * rate) if rate.is_integer() else round(coins * rate, 2)
-# print("The total amount of dollars: ", dollars)
+if __name__ == "__main__":
+    conv = MyConverter()
+    conv.run()
